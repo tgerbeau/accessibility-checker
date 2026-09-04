@@ -1,0 +1,12 @@
+# Intégration GitLab CI — tests d'accessibilité RGAA
+rgaa:
+  stage: test
+  image: cypress/base:20.18.0
+  script:
+    - npm ci
+    - node bin/rgaa-ci.js --config rgaa.config.json
+  artifacts:
+    when: always
+    paths:
+      - rgaa-report/
+    expire_in: 30 days

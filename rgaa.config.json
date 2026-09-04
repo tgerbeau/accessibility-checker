@@ -1,0 +1,16 @@
+{
+  "urls": [
+    "https://example.org"
+  ],
+  "sitemap": null,
+  "maxPages": 25,
+  "output": "rgaa-report",
+  "failOn": "serious",
+  "maxViolations": 0,
+  "viewport": "1280x720",
+  "timeout": 30000,
+  "html": true,
+  "ignoreRules": [],
+  "httpHeaders": {},
+  "basicAuth": null
+}

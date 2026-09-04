@@ -1,0 +1,30 @@
+{
+  "name": "rgaa-ci",
+  "version": "1.0.0",
+  "description": "Outil de tests d'accessibilité RGAA automatisés pour chaînes d'intégration continue (CI)",
+  "type": "module",
+  "bin": {
+    "rgaa-ci": "./bin/rgaa-ci.js"
+  },
+  "scripts": {
+    "test": "node bin/rgaa-ci.js --config rgaa.config.json",
+    "cypress:open": "cypress open"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "accessibilité",
+    "rgaa",
+    "a11y",
+    "ci",
+    "axe-core",
+    "cypress"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "axe-core": "^4.10.0",
+    "cypress": "^13.15.0",
+    "cypress-axe": "^1.5.0"
+  }
+}
