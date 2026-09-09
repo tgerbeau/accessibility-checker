@@ -1,0 +1,122 @@
+name: "RGAA CI — Tests d'accessibilité"
+description: >-
+  Exécute les tests d'accessibilité RGAA automatisables (axe-core + Cypress)
+  sur une liste de pages, publie les rapports en artefact et commente la PR.
+author: rgaa-ci
+branding:
+  icon: eye
+  color: blue
+
+inputs:
+  urls:
+    description: "URLs à analyser, séparées par des espaces ou des retours à la ligne"
+    required: false
+  sitemap:
+    description: "URL d'un sitemap.xml dont les pages sont ajoutées à l'analyse"
+    required: false
+  config:
+    description: "Chemin d'un fichier rgaa.config.json dans le dépôt appelant"
+    required: false
+  fail-on:
+    description: "Seuil d'échec : critical | serious | moderate | minor | any"
+    required: false
+    default: "serious"
+  max-violations:
+    description: "Nombre de violations tolérées au-dessus du seuil"
+    required: false
+    default: "0"
+  max-pages:
+    description: "Nombre max de pages issues du sitemap"
+    required: false
+    default: "25"
+  output:
+    description: "Dossier de sortie des rapports"
+    required: false
+    default: "rgaa-report"
+  comment-pr:
+    description: "Poster/mettre à jour un commentaire de synthèse sur la pull request"
+    required: false
+    default: "true"
+  artifact-name:
+    description: "Nom de l'artefact contenant les rapports (vide pour désactiver)"
+    required: false
+    default: "rapport-rgaa"
+  github-token:
+    description: "Jeton utilisé pour commenter la PR"
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  violations:
+    description: "Nombre de violations au-dessus du seuil"
+    value: ${{ steps.run.outputs.violations }}
+  report-path:
+    description: "Dossier contenant rgaa-report.json et rgaa-report.html"
+    value: ${{ inputs.output }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Cache du binaire Cypress
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/Cypress
+        key: cypress-${{ runner.os }}-${{ hashFiles(format('{0}/package-lock.json', github.action_path)) }}
+
+    - name: Installation de rgaa-ci
+      shell: bash
+      run: cd "$GITHUB_ACTION_PATH" && npm ci
+
+    - name: Exécution des tests RGAA
+      id: run
+      shell: bash
+      env:
+        INPUT_URLS: ${{ inputs.urls }}
+        INPUT_SITEMAP: ${{ inputs.sitemap }}
+        INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_MAX_VIOLATIONS: ${{ inputs.max-violations }}
+        INPUT_MAX_PAGES: ${{ inputs.max-pages }}
+        INPUT_OUTPUT: ${{ inputs.output }}
+      run: |
+        ARGS=()
+        [ -n "$INPUT_CONFIG" ] && ARGS+=(--config "$INPUT_CONFIG")
+        for u in $INPUT_URLS; do ARGS+=(--url "$u"); done
+        [ -n "$INPUT_SITEMAP" ] && ARGS+=(--sitemap "$INPUT_SITEMAP" --max-pages "$INPUT_MAX_PAGES")
+        set +e
+        node "$GITHUB_ACTION_PATH/bin/rgaa-ci.js" "${ARGS[@]}" \
+          --output "$INPUT_OUTPUT" \
+          --fail-on "$INPUT_FAIL_ON" \
+          --max-violations "$INPUT_MAX_VIOLATIONS"
+        CODE=$?
+        set -e
+        echo "exit-code=$CODE" >> "$GITHUB_OUTPUT"
+        VIOLATIONS=$(node -e "try{console.log(JSON.parse(require('fs').readFileSync('$INPUT_OUTPUT/rgaa-report.json','utf8')).totals.violationsAboveThreshold)}catch{console.log('')}")
+        echo "violations=$VIOLATIONS" >> "$GITHUB_OUTPUT"
+
+    - name: Publication des rapports
+      if: always() && inputs.artifact-name != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.output }}/
+
+    - name: Commentaire sur la pull request
+      if: always() && inputs.comment-pr == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      env:
+        REPORT_DIR: ${{ inputs.output }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const script = require(`${process.env.GITHUB_ACTION_PATH}/.github/scripts/pr-comment.cjs`);
+          await script({ github, context, core }, process.env.REPORT_DIR);
+
+    - name: Application du seuil d'échec
+      if: always()
+      shell: bash
+      run: exit "${{ steps.run.outputs.exit-code }}"

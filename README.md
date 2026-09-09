@@ -11,6 +11,9 @@ avec une **table de correspondance règles axe → critères RGAA** ([src/rgaa-m
 > ⚠️ Les tests automatiques ne couvrent qu'une partie du RGAA. Un audit manuel reste
 > indispensable pour établir une déclaration d'accessibilité.
 
+📘 **Vous voulez juste utiliser l'outil sur votre plateforme ?**
+Suivez le [guide développeur](GUIDE-DEVELOPPEUR.md) (2 fichiers à créer, 5 minutes).
+
 ## Installation
 
 ```bash
@@ -71,6 +74,43 @@ Deux rapports sont générés dans le dossier de sortie :
 
 ## Intégration CI
 
+### GitHub Action réutilisable (recommandé pour plusieurs dépôts)
+
+Ce dépôt est aussi une **action composite** ([action.yml](action.yml)) : n'importe quel projet
+GitHub peut l'utiliser sans rien installer, en quelques lignes :
+
+```yaml
+# .github/workflows/rgaa.yml du projet consommateur
+name: Accessibilité RGAA
+on: [pull_request]
+
+permissions:
+  pull-requests: write   # requis pour le commentaire de PR
+
+jobs:
+  rgaa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mon-org/outil-access@v1
+        with:
+          urls: https://mon-site.fr https://mon-site.fr/contact
+          fail-on: serious
+```
+
+Entrées disponibles : `urls`, `sitemap`, `config` (un `rgaa.config.json` du dépôt appelant,
+ajouter alors un `actions/checkout` avant), `fail-on`, `max-violations`, `max-pages`,
+`output`, `comment-pr`, `artifact-name`, `github-token`.
+
+L'action publie les rapports en artefact, **commente automatiquement la pull request**
+avec la synthèse par critère RGAA (commentaire mis à jour à chaque push), et fait échouer
+le job selon le seuil. Pensez à créer un tag (`git tag v1 && git push --tags`) pour figer
+la version consommée.
+
+### Workflows fournis
+
+- **Exemple prêt à copier** : [.github/workflows/rgaa.yml](.github/workflows/rgaa.yml)
+  (utilise l'action sur PR avec commentaire automatique — remplacer `uses: ./` par
+  `uses: mon-org/outil-access@v1` dans vos dépôts).
 - **GitHub Actions** : [.github/workflows/accessibility.yml](.github/workflows/accessibility.yml)
   (déclenchement sur push/PR, rapports publiés en artefacts).
 - **GitLab CI** : [.gitlab-ci.yml](.gitlab-ci.yml) (image Cypress officielle, artefacts 30 jours).

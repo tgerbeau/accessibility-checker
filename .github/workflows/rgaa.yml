@@ -1,0 +1,23 @@
+# Workflow d'exemple : à copier dans les dépôts consommateurs en remplaçant
+# `uses: ./` par `uses: mon-org/outil-access@v1`.
+name: Accessibilité RGAA
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write # requis pour le commentaire de PR
+
+jobs:
+  rgaa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # pour lire rgaa.config.json
+
+      - name: Tests d'accessibilité RGAA
+        uses: ./ # dans un autre dépôt : mon-org/outil-access@v1
+        with:
+          config: rgaa.config.json
+          fail-on: serious
