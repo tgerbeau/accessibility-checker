@@ -91,7 +91,7 @@ jobs:
   rgaa:
     runs-on: ubuntu-latest
     steps:
-      - uses: mon-org/outil-access@v1
+      - uses: tgerbeau/accessibility-checker@v1
         with:
           urls: https://mon-site.fr https://mon-site.fr/contact
           fail-on: serious
@@ -110,7 +110,7 @@ la version consommée.
 
 - **Exemple prêt à copier** : [.github/workflows/rgaa.yml](.github/workflows/rgaa.yml)
   (utilise l'action sur PR avec commentaire automatique — remplacer `uses: ./` par
-  `uses: mon-org/outil-access@v1` dans vos dépôts).
+  `uses: tgerbeau/accessibility-checker@v1` dans vos dépôts).
 - **GitHub Actions** : [.github/workflows/accessibility.yml](.github/workflows/accessibility.yml)
   (déclenchement sur push/PR, rapports publiés en artefacts).
 - **GitLab CI** : [.gitlab-ci.yml](.gitlab-ci.yml) (image Cypress officielle, artefacts 30 jours).
