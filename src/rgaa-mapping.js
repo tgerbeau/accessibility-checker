@@ -34,12 +34,20 @@ export const AXE_TO_RGAA = {
   // Thématique 6 — Liens (6.1 exclu : caractère explicite d'un lien = jugement humain)
   'link-name':            { rgaa: ['6.2'], theme: 'Liens' },
 
-  // Thématique 7 — Scripts
+  // Thématique 7 — Scripts (7.1 : "chaque script est-il, si nécessaire, compatible
+  // avec les technologies d'assistance ?" — un composant/script sans nom accessible
+  // échoue objectivement ce critère, sans jugement humain sur la pertinence du nom)
   'button-name':          { rgaa: ['7.1'], theme: 'Scripts' },
+  'input-button-name':    { rgaa: ['7.1'], theme: 'Scripts' }, // <input type="button|submit|reset"> : même test que button-name
+  'summary-name':         { rgaa: ['7.1'], theme: 'Scripts' }, // <summary> sans nom accessible
   'nested-interactive':   { rgaa: ['7.1'], theme: 'Scripts' },
   'aria-command-name':    { rgaa: ['7.1'], theme: 'Scripts' },
   'aria-toggle-field-name': { rgaa: ['7.1'], theme: 'Scripts' },
   'aria-tooltip-name':    { rgaa: ['7.1'], theme: 'Scripts' },
+  'aria-tab-name':        { rgaa: ['7.1'], theme: 'Scripts' }, // rôle ARIA "tab" sans nom accessible
+  'aria-meter-name':      { rgaa: ['7.1'], theme: 'Scripts' }, // rôle ARIA "meter" sans nom accessible
+  'aria-progressbar-name': { rgaa: ['7.1'], theme: 'Scripts' }, // rôle ARIA "progressbar" sans nom accessible
+  'aria-braille-equivalent': { rgaa: ['7.1'], theme: 'Scripts' }, // équivalent texte de aria-braillelabel/brailleroledescription absent
   'frame-focusable-content': { rgaa: ['7.3'], theme: 'Scripts' },
   'scrollable-region-focusable': { rgaa: ['7.3'], theme: 'Scripts' },
 
@@ -96,3 +104,15 @@ export const AXE_TO_RGAA = {
 export function mapRule(ruleId) {
   return AXE_TO_RGAA[ruleId] ?? { rgaa: [], theme: 'Hors RGAA (bonnes pratiques)' };
 }
+
+/**
+ * Règles axe WCAG A/AA exécutées (tag `runOnly` de cypress/e2e/rgaa.cy.js) mais
+ * volontairement absentes du mapping ci-dessus (comptent quand même dans le seuil
+ * d'échec `fail-on`, seule la catégorisation RGAA est « Hors RGAA ») :
+ * - `css-orientation-lock`, `label-content-name-mismatch`, `p-as-heading`,
+ *   `table-fake-caption`, `td-has-header` : tag axe-core `experimental`
+ *   (heuristique, faux positifs possibles — contraire à la politique « tests solides »).
+ * - `aria-roledescription`, `audio-caption` : tag axe-core `deprecated`.
+ * - `target-size` (WCAG 2.5.8) : tag `wcag22aa`, pas de critère RGAA 4.1 correspondant
+ *   et hors du `runOnly` de la spec Cypress (ne s'exécute donc pas).
+ */
