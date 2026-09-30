@@ -1,10 +1,17 @@
-# Workflow d'exemple : à copier dans les dépôts consommateurs en remplaçant
-# `uses: ./` par `uses: tgerbeau/accessibility-checker@v1`.
+# CI de ce dépôt : dogfooding de l'action composite (./) sur push/PR/déclenchement manuel.
+# Pour un dépôt consommateur, remplacer `uses: ./` par `uses: tgerbeau/accessibility-checker@v1`
+# (voir le README, section « Intégration CI »).
 name: Accessibilité RGAA
 
 on:
   pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
+    inputs:
+      urls:
+        description: "URLs à analyser (séparées par des espaces, sinon rgaa.config.json est utilisé)"
+        required: false
 
 permissions:
   contents: read
@@ -20,4 +27,5 @@ jobs:
         uses: ./ # dans un autre dépôt : tgerbeau/accessibility-checker@v1
         with:
           config: rgaa.config.json
+          urls: ${{ github.event.inputs.urls }}
           fail-on: serious

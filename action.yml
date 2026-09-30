@@ -67,7 +67,15 @@ runs:
         path: ~/.cache/Cypress
         key: cypress-${{ runner.os }}-${{ hashFiles(format('{0}/package-lock.json', github.action_path)) }}
 
+    - name: Cache des dépendances npm
+      id: npm-cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.action_path }}/node_modules
+        key: node-modules-${{ runner.os }}-${{ hashFiles(format('{0}/package-lock.json', github.action_path)) }}
+
     - name: Installation de rgaa-ci
+      if: steps.npm-cache.outputs.cache-hit != 'true'
       shell: bash
       run: cd "$GITHUB_ACTION_PATH" && npm ci
 
