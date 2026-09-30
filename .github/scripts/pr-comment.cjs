@@ -10,6 +10,13 @@ const SEVERITY_LABELS = {
   moderate: 'Modéré',
   minor: 'Mineur',
 };
+const SEVERITY_ORDER = ['minor', 'moderate', 'serious', 'critical'];
+
+/** true si `impact` atteint ou dépasse le seuil `failOn` (même logique que src/runner.js). */
+function reachesThreshold(impact, failOn) {
+  if (failOn === 'any') return true;
+  return SEVERITY_ORDER.indexOf(impact) >= SEVERITY_ORDER.indexOf(failOn);
+}
 
 function buildBody(report, runUrl) {
   const t = report.totals;
@@ -35,13 +42,28 @@ function buildBody(report, runUrl) {
 
   // Regroupement par critère RGAA
   const byCriterion = new Map();
+  // Règles axe exécutées mais non mappées à un critère RGAA (cf. src/rgaa-mapping.js) :
+  // restent bloquantes selon le seuil, mais invisibles de la section ci-dessus.
+  const unmapped = new Map();
   for (const page of report.pages || []) {
     for (const v of page.violations || []) {
-      for (const c of v.rgaaCriteria || []) {
-        const entry = byCriterion.get(c) || { theme: v.rgaaTheme, occurrences: 0, rules: new Set() };
+      if (v.rgaaCriteria && v.rgaaCriteria.length) {
+        for (const c of v.rgaaCriteria) {
+          const entry = byCriterion.get(c) || { theme: v.rgaaTheme, occurrences: 0, rules: new Set() };
+          entry.occurrences += (v.nodes || []).length;
+          entry.rules.add(v.rule);
+          byCriterion.set(c, entry);
+        }
+      } else {
+        const entry = unmapped.get(v.rule) || {
+          impact: v.impact,
+          helpUrl: v.helpUrl,
+          occurrences: 0,
+          blocking: false,
+        };
         entry.occurrences += (v.nodes || []).length;
-        entry.rules.add(v.rule);
-        byCriterion.set(c, entry);
+        entry.blocking = entry.blocking || reachesThreshold(v.impact, report.config.failOn);
+        unmapped.set(v.rule, entry);
       }
     }
   }
@@ -53,6 +75,16 @@ function buildBody(report, runUrl) {
       a.localeCompare(b, 'fr', { numeric: true }));
     for (const [criterion, e] of sorted) {
       lines.push(`| ${criterion} | ${e.theme || '—'} | ${e.occurrences} | ${[...e.rules].join(', ')} |`);
+    }
+    lines.push('', '</details>');
+  }
+
+  if (unmapped.size > 0) {
+    lines.push('', '<details><summary>Règles axe hors mapping RGAA (bonnes pratiques)</summary>', '',
+      '| Règle axe | Sévérité | Occurrences | Bloquant | Documentation |', '|---|---|---|---|---|');
+    const sorted = [...unmapped.entries()].sort(([a], [b]) => a.localeCompare(b));
+    for (const [rule, e] of sorted) {
+      lines.push(`| ${rule} | ${SEVERITY_LABELS[e.impact] ?? e.impact} | ${e.occurrences} | ${e.blocking ? '⚠️ oui' : 'non'} | [axe-core](${e.helpUrl}) |`);
     }
     lines.push('', '</details>');
   }

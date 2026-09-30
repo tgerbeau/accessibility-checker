@@ -28,6 +28,7 @@ export async function runAudit(conf) {
     project: PKG_ROOT,
     browser: 'electron',
     quiet: conf.quiet,
+    spec: 'cypress/e2e/rgaa.cy.js',
     config: {
       viewportWidth: conf.viewportSize.width,
       viewportHeight: conf.viewportSize.height,

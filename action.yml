@@ -14,6 +14,12 @@ inputs:
   sitemap:
     description: "URL d'un sitemap.xml dont les pages sont ajoutées à l'analyse"
     required: false
+  discover-links:
+    description: >-
+      Découverte automatique des pages principales liées depuis `urls`
+      (désactivée si `sitemap` est fourni). Mettre à "false" pour désactiver.
+    required: false
+    default: "true"
   config:
     description: "Chemin d'un fichier rgaa.config.json dans le dépôt appelant"
     required: false
@@ -26,7 +32,7 @@ inputs:
     required: false
     default: "0"
   max-pages:
-    description: "Nombre max de pages issues du sitemap"
+    description: "Nombre max de pages issues du sitemap ou de la découverte automatique de liens"
     required: false
     default: "25"
   output:
@@ -65,9 +71,17 @@ runs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/Cypress
-        key: cypress-${{ runner.os }}-${{ hashFiles(format('{0}/package-lock.json', github.action_path)) }}
+        key: cypress-${{ runner.os }}-${{ github.action_ref || github.sha }}
+
+    - name: Cache des dépendances npm
+      id: npm-cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.action_path }}/node_modules
+        key: node-modules-${{ runner.os }}-${{ github.action_ref || github.sha }}
 
     - name: Installation de rgaa-ci
+      if: steps.npm-cache.outputs.cache-hit != 'true'
       shell: bash
       run: cd "$GITHUB_ACTION_PATH" && npm ci
 
@@ -77,6 +91,7 @@ runs:
       env:
         INPUT_URLS: ${{ inputs.urls }}
         INPUT_SITEMAP: ${{ inputs.sitemap }}
+        INPUT_DISCOVER_LINKS: ${{ inputs.discover-links }}
         INPUT_CONFIG: ${{ inputs.config }}
         INPUT_FAIL_ON: ${{ inputs.fail-on }}
         INPUT_MAX_VIOLATIONS: ${{ inputs.max-violations }}
@@ -86,12 +101,14 @@ runs:
         ARGS=()
         [ -n "$INPUT_CONFIG" ] && ARGS+=(--config "$INPUT_CONFIG")
         for u in $INPUT_URLS; do ARGS+=(--url "$u"); done
-        [ -n "$INPUT_SITEMAP" ] && ARGS+=(--sitemap "$INPUT_SITEMAP" --max-pages "$INPUT_MAX_PAGES")
+        [ -n "$INPUT_SITEMAP" ] && ARGS+=(--sitemap "$INPUT_SITEMAP")
+        [ "$INPUT_DISCOVER_LINKS" = "false" ] && ARGS+=(--no-discover)
         set +e
         node "$GITHUB_ACTION_PATH/bin/rgaa-ci.js" "${ARGS[@]}" \
           --output "$INPUT_OUTPUT" \
           --fail-on "$INPUT_FAIL_ON" \
-          --max-violations "$INPUT_MAX_VIOLATIONS"
+          --max-violations "$INPUT_MAX_VIOLATIONS" \
+          --max-pages "$INPUT_MAX_PAGES"
         CODE=$?
         set -e
         echo "exit-code=$CODE" >> "$GITHUB_OUTPUT"

@@ -28,15 +28,16 @@ chaque violation y figure avec le code HTML fautif et comment la corriger.
 
 ### Fichier 1 : `rgaa.config.json` (à la racine de votre projet)
 
-Listez 3 à 10 pages **aux gabarits différents** (accueil, formulaire,
-liste de résultats, page de contenu…) :
+Une ou deux URLs suffisent : l'outil **découvre et teste automatiquement**
+les pages principales liées depuis celles-ci (menu, pied de page…), sans
+crawl récursif ni doublon de gabarit. Vous pouvez bien sûr en lister
+davantage si vous voulez cibler des pages précises (formulaire, résultats
+de recherche…) :
 
 ```json
 {
   "urls": [
-    "https://recette.ma-plateforme.fr/",
-    "https://recette.ma-plateforme.fr/connexion",
-    "https://recette.ma-plateforme.fr/recherche"
+    "https://recette.ma-plateforme.fr/"
   ],
   "failOn": "serious"
 }
@@ -77,6 +78,7 @@ jobs:
 | Adoption en douceur | `"failOn": "critical"` d'abord, puis durcir vers `serious` / `any` |
 | Tolérer N violations | `"maxViolations": 5` |
 | Beaucoup de pages | `"sitemap": "https://ma-plateforme.fr/sitemap.xml"` + `"maxPages": 25` |
+| Cibler précisément vos URLs (pas de découverte auto) | `"discover": false` |
 | Recette protégée par jeton | `"httpHeaders": { "Authorization": "Bearer …" }` |
 | Recette protégée par mot de passe | `"basicAuth": { "username": "…", "password": "…" }` |
 | Ignorer une règle (faux positif assumé) | `"ignoreRules": ["color-contrast"]` |
@@ -94,6 +96,18 @@ Toutes les options : voir le [README](README.md).
 - **`rgaa-report.json`** : exploitable par vos propres scripts.
 
 Codes de sortie : `0` = OK, `1` = seuil dépassé, `2` = erreur (page inaccessible…).
+
+---
+
+## 4bis. Et les ~70 % de critères non automatisables ?
+
+Un pipeline vert ne signifie pas un site conforme RGAA. Pour couvrir les critères
+nécessitant un jugement humain (pertinence des alternatives, intitulés de liens,
+ordre de tabulation, structure des titres…), référez-vous au
+[référentiel officiel RGAA 4.1 de la DINUM](https://accessibilite.numerique.gouv.fr/methode/criteres-et-tests/)
+(critères et méthodes de test) et au
+[guide d'accompagnement](https://accessibilite.numerique.gouv.fr/) pour établir
+une déclaration d'accessibilité complète.
 
 ---
 

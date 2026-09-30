@@ -8,6 +8,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { runAudit } from '../src/runner.js';
 import { fetchSitemapUrls } from '../src/sitemap.js';
+import { discoverPages } from '../src/discover.js';
 
 function printHelp() {
   console.log(`
@@ -20,7 +21,12 @@ Usage :
 Options :
   --url <url>            URL à analyser (répétable)
   --sitemap <url>        URL d'un sitemap.xml : toutes ses pages sont analysées
-  --max-pages <n>        Nombre max de pages issues du sitemap (défaut : 25)
+                         (désactive la découverte automatique de liens)
+  --no-discover          Désactive la découverte automatique des pages
+                         principales liées depuis les URLs fournies (activée
+                         par défaut dès qu'une URL est fournie sans sitemap)
+  --max-pages <n>        Nombre max de pages issues du sitemap ou de la
+                         découverte automatique de liens (défaut : 25)
   --config <fichier>     Fichier de configuration JSON
   --output <dossier>     Dossier de sortie des rapports (défaut : ./rgaa-report)
   --fail-on <niveau>     Seuil d'échec : critical | serious | moderate | minor | any
@@ -46,6 +52,7 @@ function parseArgs(argv) {
     switch (a) {
       case '--url': args.urls.push(argv[++i]); break;
       case '--sitemap': args.sitemap = argv[++i]; break;
+      case '--no-discover': args.discover = false; break;
       case '--max-pages': args.maxPages = Number(argv[++i]); break;
       case '--config': args.config = argv[++i]; break;
       case '--output': args.output = argv[++i]; break;
@@ -84,6 +91,7 @@ function loadConfig(args) {
   const conf = {
     urls: args.urls.length ? args.urls : (fileConf.urls ?? []),
     sitemap: args.sitemap ?? fileConf.sitemap ?? null,
+    discover: args.discover ?? fileConf.discover ?? true,
     maxPages: args.maxPages ?? fileConf.maxPages ?? 25,
     output: args.output ?? fileConf.output ?? 'rgaa-report',
     failOn: args.failOn ?? fileConf.failOn ?? 'serious',
@@ -132,6 +140,12 @@ try {
       console.error('Le sitemap ne contient aucune URL.');
       process.exit(2);
     }
+  } else if (conf.discover && conf.urls.length && conf.urls.length < conf.maxPages) {
+    const found = await discoverPages(conf);
+    const budget = conf.maxPages - conf.urls.length;
+    const added = found.slice(0, budget);
+    if (added.length) conf.urls = [...conf.urls, ...added];
+    if (!conf.quiet) console.log(`  ${found.length} page(s) interne(s) détectée(s), ${added.length} ajoutée(s) (max-pages : ${conf.maxPages})`);
   }
   const { exitCode } = await runAudit(conf);
   process.exit(exitCode);
