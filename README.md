@@ -9,7 +9,8 @@ locale française) piloté par **Cypress** (via [cypress-axe](https://github.com
 avec une **table de correspondance règles axe → critères RGAA** ([src/rgaa-mapping.js](src/rgaa-mapping.js)).
 
 > ⚠️ Les tests automatiques ne couvrent qu'une partie du RGAA. Un audit manuel reste
-> indispensable pour établir une déclaration d'accessibilité.
+> indispensable pour établir une déclaration d'accessibilité (voir le
+> [référentiel officiel RGAA 4.1 de la DINUM](https://accessibilite.numerique.gouv.fr/methode/criteres-et-tests/)).
 
 📘 **Vous voulez juste utiliser l'outil sur votre plateforme ?**
 Suivez le [guide développeur](GUIDE-DEVELOPPEUR.md) (2 fichiers à créer, 5 minutes).

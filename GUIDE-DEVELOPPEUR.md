@@ -97,6 +97,18 @@ Codes de sortie : `0` = OK, `1` = seuil dépassé, `2` = erreur (page inaccessib
 
 ---
 
+## 4bis. Et les ~70 % de critères non automatisables ?
+
+Un pipeline vert ne signifie pas un site conforme RGAA. Pour couvrir les critères
+nécessitant un jugement humain (pertinence des alternatives, intitulés de liens,
+ordre de tabulation, structure des titres…), référez-vous au
+[référentiel officiel RGAA 4.1 de la DINUM](https://accessibilite.numerique.gouv.fr/methode/criteres-et-tests/)
+(critères et méthodes de test) et au
+[guide d'accompagnement](https://accessibilite.numerique.gouv.fr/) pour établir
+une déclaration d'accessibilité complète.
+
+---
+
 ## 5. Questions fréquentes
 
 **Le job échoue dès l'installation ?**
