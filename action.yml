@@ -65,14 +65,14 @@ runs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/Cypress
-        key: cypress-${{ runner.os }}-${{ hashFiles(format('{0}/package-lock.json', github.action_path)) }}
+        key: cypress-${{ runner.os }}-${{ github.action_ref || github.sha }}
 
     - name: Cache des dépendances npm
       id: npm-cache
       uses: actions/cache@v4
       with:
         path: ${{ github.action_path }}/node_modules
-        key: node-modules-${{ runner.os }}-${{ hashFiles(format('{0}/package-lock.json', github.action_path)) }}
+        key: node-modules-${{ runner.os }}-${{ github.action_ref || github.sha }}
 
     - name: Installation de rgaa-ci
       if: steps.npm-cache.outputs.cache-hit != 'true'
