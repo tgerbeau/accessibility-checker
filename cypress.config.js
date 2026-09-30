@@ -13,6 +13,11 @@ export default defineConfig({
         rgaaResult(page) {
           appendFileSync(config.env.rgaa.resultsFile, JSON.stringify(page) + '\n', 'utf8');
           return null;
+        },
+        // Liens internes trouvés lors de la découverte des pages principales (NDJSON)
+        rgaaDiscovered(row) {
+          appendFileSync(config.env.rgaaDiscover.resultsFile, JSON.stringify(row) + '\n', 'utf8');
+          return null;
         }
       });
       return config;

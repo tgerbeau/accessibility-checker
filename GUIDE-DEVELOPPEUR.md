@@ -28,15 +28,16 @@ chaque violation y figure avec le code HTML fautif et comment la corriger.
 
 ### Fichier 1 : `rgaa.config.json` (à la racine de votre projet)
 
-Listez 3 à 10 pages **aux gabarits différents** (accueil, formulaire,
-liste de résultats, page de contenu…) :
+Une ou deux URLs suffisent : l'outil **découvre et teste automatiquement**
+les pages principales liées depuis celles-ci (menu, pied de page…), sans
+crawl récursif ni doublon de gabarit. Vous pouvez bien sûr en lister
+davantage si vous voulez cibler des pages précises (formulaire, résultats
+de recherche…) :
 
 ```json
 {
   "urls": [
-    "https://recette.ma-plateforme.fr/",
-    "https://recette.ma-plateforme.fr/connexion",
-    "https://recette.ma-plateforme.fr/recherche"
+    "https://recette.ma-plateforme.fr/"
   ],
   "failOn": "serious"
 }
@@ -77,6 +78,7 @@ jobs:
 | Adoption en douceur | `"failOn": "critical"` d'abord, puis durcir vers `serious` / `any` |
 | Tolérer N violations | `"maxViolations": 5` |
 | Beaucoup de pages | `"sitemap": "https://ma-plateforme.fr/sitemap.xml"` + `"maxPages": 25` |
+| Cibler précisément vos URLs (pas de découverte auto) | `"discover": false` |
 | Recette protégée par jeton | `"httpHeaders": { "Authorization": "Bearer …" }` |
 | Recette protégée par mot de passe | `"basicAuth": { "username": "…", "password": "…" }` |
 | Ignorer une règle (faux positif assumé) | `"ignoreRules": ["color-contrast"]` |

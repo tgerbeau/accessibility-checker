@@ -39,8 +39,9 @@ node bin/rgaa-ci.js --config rgaa.config.json
 | Option | Description | Défaut |
 |---|---|---|
 | `--url <url>` | URL à analyser (répétable) | — |
-| `--sitemap <url>` | URL d'un sitemap.xml : ses pages sont ajoutées à l'analyse (index de sitemaps supportés) | — |
-| `--max-pages <n>` | Nombre max de pages issues du sitemap | `25` |
+| `--sitemap <url>` | URL d'un sitemap.xml : ses pages sont ajoutées à l'analyse (index de sitemaps supportés) ; désactive la découverte automatique de liens | — |
+| `--no-discover` | Désactive la découverte automatique des pages principales liées depuis les URLs fournies (voir ci-dessous) | — |
+| `--max-pages <n>` | Nombre max de pages issues du sitemap ou de la découverte automatique de liens | `25` |
 | `--config <fichier>` | Fichier de configuration JSON | — |
 | `--output <dossier>` | Dossier des rapports | `rgaa-report` |
 | `--fail-on <niveau>` | Seuil d'échec : `critical`, `serious`, `moderate`, `minor`, `any` | `serious` |
@@ -50,13 +51,37 @@ node bin/rgaa-ci.js --config rgaa.config.json
 | `--no-html` | Désactive le rapport HTML | — |
 | `--quiet` | Sortie console minimale | — |
 
+### Découverte automatique des pages principales
+
+Tester une seule page donne une vision très partielle du site : sur des cas réels
+testés en développement, la page d'accueil ne représentait parfois que **quelques
+pourcents** des violations détectées sur l'ensemble du site (formulaires, pages de
+résultats de recherche, contenus profonds…). C'est pourquoi, **dès qu'au moins une
+URL est fournie sans `--sitemap`**, l'outil visite ces URL(s) puis en extrait
+automatiquement les liens internes (même domaine) pour élargir l'analyse aux pages
+principales du site — sans que vous ayez à toutes les lister.
+
+Caractéristiques :
+
+- une seule profondeur (liens présents sur les pages de départ, pas de crawl récursif) ;
+- dédoublonnage par gabarit (une seule variante par route, ex. une seule URL
+  `/carte?lon=…` même si la page en propose des dizaines avec des paramètres différents) ;
+- priorité aux chemins courts (pages principales avant pages profondes) ;
+- plafonné par `--max-pages` (défaut : 25), au même titre que le sitemap ;
+- désactivable avec `--no-discover` (ou `"discover": false` dans la configuration)
+  pour revenir au comportement historique (seules les URLs fournies sont testées).
+
+Si `--sitemap` est fourni, il est déjà exhaustif : la découverte automatique de liens
+est alors ignorée.
+
 ### Fichier de configuration
 
 Voir [rgaa.config.json](rgaa.config.json). Champs supplémentaires disponibles :
 
 - `ignoreRules` : liste de règles axe à désactiver (ex. `["color-contrast"]`) ;
 - `httpHeaders` : en-têtes HTTP à envoyer (ex. jeton d'accès à un environnement de recette) ;
-- `basicAuth` : `{ "username": "...", "password": "..." }`.
+- `basicAuth` : `{ "username": "...", "password": "..." }` ;
+- `discover` : `false` pour désactiver la découverte automatique de liens (défaut : `true`).
 
 ### Codes de sortie
 
@@ -98,8 +123,8 @@ jobs:
           fail-on: serious
 ```
 
-Entrées disponibles : `urls`, `sitemap`, `config` (un `rgaa.config.json` du dépôt appelant,
-ajouter alors un `actions/checkout` avant), `fail-on`, `max-violations`, `max-pages`,
+Entrées disponibles : `urls`, `sitemap`, `discover-links`, `config` (un `rgaa.config.json` du dépôt
+appelant, ajouter alors un `actions/checkout` avant), `fail-on`, `max-violations`, `max-pages`,
 `output`, `comment-pr`, `artifact-name`, `github-token`.
 
 L'action publie les rapports en artefact, **commente automatiquement la pull request**
