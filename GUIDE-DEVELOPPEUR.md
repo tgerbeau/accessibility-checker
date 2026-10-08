@@ -86,7 +86,70 @@ Toutes les options : voir le [README](README.md).
 
 ---
 
-## 4. Lire les résultats
+## 4. Ajouter des tests de performance
+
+Les tests de performance concernent le site consommateur : ajoutez-les dans un job CI
+distinct du job RGAA, après le déploiement de la prévisualisation de la pull request.
+Lighthouse CI peut auditer quelques pages représentatives. Remplacez les chemins
+ci-dessous par ceux de votre site et reliez `PREVIEW_URL` à l'URL de prévisualisation
+produite par votre étape de déploiement.
+
+Par exemple, créez `.github/workflows/performance.yml` :
+
+```yaml
+name: Performance
+on: [pull_request]
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mesures Lighthouse
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            ${{ vars.PREVIEW_URL }}/
+            ${{ vars.PREVIEW_URL }}/contenu
+            ${{ vars.PREVIEW_URL }}/recherche
+            ${{ vars.PREVIEW_URL }}/formulaire
+          configPath: .lighthouserc.json
+          uploadArtifacts: true
+```
+
+Si l'URL change à chaque pull request, utilisez la sortie de votre étape de déploiement
+à la place de `vars.PREVIEW_URL` et faites dépendre ce job de cette étape. Créez aussi
+`.lighthouserc.json` pour définir les seuils :
+
+```json
+{
+  "ci": {
+    "assert": {
+      "assertions": {
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+        "total-blocking-time": ["warn", { "maxNumericValue": 200 }]
+      }
+    }
+  }
+}
+```
+
+LCP ≤ 2,5 s et CLS ≤ 0,1 sont les seuils « bons » des Core Web Vitals. Lighthouse CI
+mesure ces valeurs en laboratoire ; **INP ≤ 200 ms doit être suivi avec des données
+réelles** (par exemple CrUX ou un outil de RUM), car une mesure de laboratoire ne
+remplace pas l'INP terrain. Le TBT est un indicateur de laboratoire complémentaire,
+pas un équivalent de l'INP.
+
+Commencez par enregistrer plusieurs exécutions et examiner les rapports artefacts pour
+établir une référence, car les mesures de laboratoire varient. Activez d'abord les
+seuils en avertissement si nécessaire, puis faites échouer le job sur les seuils
+stables. Pour mesurer les régressions au fil des déploiements, conservez et comparez
+les rapports ; les seuils fixes ci-dessus ne calculent pas à eux seuls une différence
+par rapport à une exécution précédente.
+
+---
+
+## 5. Lire les résultats
 
 - **Commentaire de PR** : synthèse par sévérité et par critère RGAA ;
 - **`rgaa-report.html`** (artefact du job) : rapport détaillé, avec pour chaque
@@ -97,7 +160,7 @@ Codes de sortie : `0` = OK, `1` = seuil dépassé, `2` = erreur (page inaccessib
 
 ---
 
-## 5. Questions fréquentes
+## 6. Questions fréquentes
 
 **Le job échoue dès l'installation ?**
 Vérifiez Node ≥ 18. Le binaire Cypress (~200 Mo) est mis en cache automatiquement
